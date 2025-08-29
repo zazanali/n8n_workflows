@@ -1,0 +1,271 @@
+{
+  "name": "Agents Vs Chain",
+  "nodes": [
+    {
+      "parameters": {
+        "options": {}
+      },
+      "id": "2a13b22a-de31-4fb2-9d80-019f469e7456",
+      "name": "Chat Trigger",
+      "type": "@n8n/n8n-nodes-langchain.chatTrigger",
+      "typeVersion": 1,
+      "position": [
+        -432,
+        144
+      ],
+      "webhookId": "84bfdbd0-e2ce-4bfa-b746-985e64a14484"
+    },
+    {
+      "parameters": {},
+      "id": "6acef71e-44c8-4140-845b-0b434739416b",
+      "name": "Window Buffer Memory",
+      "type": "@n8n/n8n-nodes-langchain.memoryBufferWindow",
+      "typeVersion": 1.2,
+      "position": [
+        384,
+        368
+      ]
+    },
+    {
+      "parameters": {},
+      "id": "537c4306-ac89-45b1-9b53-bc872416a644",
+      "name": "Wikipedia",
+      "type": "@n8n/n8n-nodes-langchain.toolWikipedia",
+      "typeVersion": 1,
+      "position": [
+        544,
+        368
+      ]
+    },
+    {
+      "parameters": {
+        "options": {}
+      },
+      "id": "29e8155d-60a0-4980-b7ab-78fc7c2b4a37",
+      "name": "AI Agent",
+      "type": "@n8n/n8n-nodes-langchain.agent",
+      "typeVersion": 1.5,
+      "position": [
+        240,
+        128
+      ]
+    },
+    {
+      "parameters": {
+        "messages": {
+          "messageValues": [
+            {
+              "message": "Every time you respond, start your response with the sentence: \"This message came from the chain\"."
+            }
+          ]
+        }
+      },
+      "id": "721243e5-7864-4661-b157-69ff11b96676",
+      "name": "Basic LLM Chain",
+      "type": "@n8n/n8n-nodes-langchain.chainLlm",
+      "typeVersion": 1.4,
+      "position": [
+        -272,
+        384
+      ]
+    },
+    {
+      "parameters": {
+        "rules": {
+          "values": [
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": false,
+                  "leftValue": "",
+                  "typeValidation": "strict"
+                },
+                "conditions": [
+                  {
+                    "leftValue": "={{ $json.chatInput }}",
+                    "rightValue": "agent",
+                    "operator": {
+                      "type": "string",
+                      "operation": "contains"
+                    }
+                  }
+                ],
+                "combinator": "and"
+              }
+            },
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": false,
+                  "leftValue": "",
+                  "typeValidation": "strict"
+                },
+                "conditions": [
+                  {
+                    "id": "248f4a34-89c1-4d1e-867a-daa024c8635a",
+                    "leftValue": "={{ $json.chatInput }}",
+                    "rightValue": "chain",
+                    "operator": {
+                      "type": "string",
+                      "operation": "contains"
+                    }
+                  }
+                ],
+                "combinator": "and"
+              }
+            }
+          ]
+        },
+        "options": {
+          "ignoreCase": true
+        }
+      },
+      "id": "ba12836f-7d06-4863-9e6e-a1de31ab015e",
+      "name": "Check user input for \"chain\" or \"agent\"",
+      "type": "n8n-nodes-base.switch",
+      "typeVersion": 3,
+      "position": [
+        -144,
+        144
+      ]
+    },
+    {
+      "parameters": {
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatGoogleGemini",
+      "typeVersion": 1,
+      "position": [
+        192,
+        352
+      ],
+      "id": "31f38b9e-f50e-4b2d-a153-f2d4845cc142",
+      "name": "Google Gemini Chat Model",
+      "credentials": {
+        "googlePalmApi": {
+          "id": "aGjhKXARqCqxnJTf",
+          "name": "Google Gemini(PaLM) Api account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatGoogleGemini",
+      "typeVersion": 1,
+      "position": [
+        -208,
+        576
+      ],
+      "id": "7ba5a137-bd32-4fa4-b448-80e624a63773",
+      "name": "Google Gemini Chat Model1",
+      "credentials": {
+        "googlePalmApi": {
+          "id": "aGjhKXARqCqxnJTf",
+          "name": "Google Gemini(PaLM) Api account"
+        }
+      }
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Chat Trigger": {
+      "main": [
+        [
+          {
+            "node": "Check user input for \"chain\" or \"agent\"",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Window Buffer Memory": {
+      "ai_memory": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "ai_memory",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Wikipedia": {
+      "ai_tool": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Check user input for \"chain\" or \"agent\"": {
+      "main": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Basic LLM Chain",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Google Gemini Chat Model": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Google Gemini Chat Model1": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "Basic LLM Chain",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "versionId": "e941cb85-574f-45fc-94ad-17afebffd384",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "6cb509c0630c42aa9c45b8a489a0ad2d0642caf53ae1843f5bd90c611e71d37e"
+  },
+  "id": "ntKpfsBdsBDihUM7",
+  "tags": [
+    {
+      "createdAt": "2025-08-27T18:21:34.976Z",
+      "updatedAt": "2025-08-27T18:21:34.976Z",
+      "id": "ugpyFExvYS0YkDt1",
+      "name": "docs"
+    },
+    {
+      "createdAt": "2025-08-27T18:21:35.004Z",
+      "updatedAt": "2025-08-27T18:21:35.004Z",
+      "id": "xYHVbHsdYAyHadgK",
+      "name": "createdBy:Debs"
+    }
+  ]
+}
