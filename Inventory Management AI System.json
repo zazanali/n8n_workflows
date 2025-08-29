@@ -1,0 +1,254 @@
+{
+  "name": "Inventory Management AI System",
+  "nodes": [
+    {
+      "parameters": {
+        "public": true,
+        "initialMessages": "Hi there! 👋\nMy name is Ali. How can I assist you today?",
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.chatTrigger",
+      "typeVersion": 1.3,
+      "position": [
+        -336,
+        -48
+      ],
+      "id": "5e0e10a0-ad42-4159-a5cd-60eed28eb7ff",
+      "name": "When chat message received",
+      "webhookId": "d6a9a145-b9fb-46b2-90e4-535d664252b4"
+    },
+    {
+      "parameters": {
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.agent",
+      "typeVersion": 2.2,
+      "position": [
+        -128,
+        -48
+      ],
+      "id": "bde3d399-bea2-493c-ae74-d70ddf96be88",
+      "name": "AI Agent",
+      "retryOnFail": true
+    },
+    {
+      "parameters": {
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatGoogleGemini",
+      "typeVersion": 1,
+      "position": [
+        -272,
+        160
+      ],
+      "id": "c09a91ef-4451-410a-9952-6fe4bb24f4ca",
+      "name": "Google Gemini Chat Model",
+      "credentials": {
+        "googlePalmApi": {
+          "id": "aGjhKXARqCqxnJTf",
+          "name": "Google Gemini(PaLM) Api account"
+        }
+      }
+    },
+    {
+      "parameters": {},
+      "type": "@n8n/n8n-nodes-langchain.memoryBufferWindow",
+      "typeVersion": 1.3,
+      "position": [
+        -128,
+        160
+      ],
+      "id": "4c826149-849b-42af-8696-da35ae34b8ea",
+      "name": "Simple Memory"
+    },
+    {
+      "parameters": {
+        "operation": "appendOrUpdate",
+        "documentId": {
+          "__rl": true,
+          "value": "1TyypPkvIM9E-JKl_E_tbXXJ9XPwoZMnYn02aOPP9kH0",
+          "mode": "list",
+          "cachedResultName": "Computer Inventory Sheet",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1TyypPkvIM9E-JKl_E_tbXXJ9XPwoZMnYn02aOPP9kH0/edit?usp=drivesdk"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": "gid=0",
+          "mode": "list",
+          "cachedResultName": "Sheet1",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1TyypPkvIM9E-JKl_E_tbXXJ9XPwoZMnYn02aOPP9kH0/edit#gid=0"
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "Item Name": "={{ /*n8n-auto-generated-fromAI-override*/ $fromAI('Item_Name__using_to_match_', ``, 'string') }}",
+            "Quantity In Stock": "={{ /*n8n-auto-generated-fromAI-override*/ $fromAI('Quantity_In_Stock', ``, 'string') }}",
+            "Sold": "={{ /*n8n-auto-generated-fromAI-override*/ $fromAI('Sold', ``, 'string') }}",
+            "Total Stock": "={{ /*n8n-auto-generated-fromAI-override*/ $fromAI('Total_Stock', ``, 'string') }}"
+          },
+          "matchingColumns": [
+            "Item Name"
+          ],
+          "schema": [
+            {
+              "id": "Item Name",
+              "displayName": "Item Name",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "Quantity In Stock",
+              "displayName": "Quantity In Stock",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Sold",
+              "displayName": "Sold",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Total Stock",
+              "displayName": "Total Stock",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleSheetsTool",
+      "typeVersion": 4.7,
+      "position": [
+        240,
+        128
+      ],
+      "id": "fb1b72fc-68dc-4634-8f57-f5c9a26dc789",
+      "name": "Append or Update Inventory",
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "edyVeXhisJ2iPVRH",
+          "name": "Google Sheets account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "documentId": {
+          "__rl": true,
+          "value": "1TyypPkvIM9E-JKl_E_tbXXJ9XPwoZMnYn02aOPP9kH0",
+          "mode": "list",
+          "cachedResultName": "Computer Inventory Sheet",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1TyypPkvIM9E-JKl_E_tbXXJ9XPwoZMnYn02aOPP9kH0/edit?usp=drivesdk"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": "gid=0",
+          "mode": "list",
+          "cachedResultName": "Sheet1",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1TyypPkvIM9E-JKl_E_tbXXJ9XPwoZMnYn02aOPP9kH0/edit#gid=0"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleSheetsTool",
+      "typeVersion": 4.7,
+      "position": [
+        96,
+        160
+      ],
+      "id": "c3edca99-a787-427e-bd71-65db06e289c7",
+      "name": "Search Inventory",
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "edyVeXhisJ2iPVRH",
+          "name": "Google Sheets account"
+        }
+      }
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "When chat message received": {
+      "main": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Google Gemini Chat Model": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Simple Memory": {
+      "ai_memory": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "ai_memory",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Append or Update Inventory": {
+      "ai_tool": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Search Inventory": {
+      "ai_tool": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "versionId": "cf92f8ea-164a-4fd0-b070-e91a4fec0a50",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "6cb509c0630c42aa9c45b8a489a0ad2d0642caf53ae1843f5bd90c611e71d37e"
+  },
+  "id": "YSOPMLbNFmUO1wOU",
+  "tags": []
+}
