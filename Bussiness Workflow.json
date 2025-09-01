@@ -1,0 +1,374 @@
+{
+  "name": "Bussiness Workflow",
+  "nodes": [
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "=Write a personalized welcome email to {{ $json.Email }} from AI Workshop.\n\nThey are in the {{ $json.Industry }} industry and need services for {{ $json['Service Required'] }} . The services will start on {{ $json['Start Date'] }} . The tone should be professional yet friendly. Include a mention that we are excited to work with them. \n\nAlso, let them know that they will be receiving a separate email with the terms of services agreement that they need to sign or simply respond to the email.\n",
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.agent",
+      "typeVersion": 2.2,
+      "position": [
+        256,
+        -288
+      ],
+      "id": "4d7ecf28-9e7e-4e5e-8684-f461d2de7f16",
+      "name": "AI Agent"
+    },
+    {
+      "parameters": {
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatGoogleGemini",
+      "typeVersion": 1,
+      "position": [
+        208,
+        -112
+      ],
+      "id": "03cb7bba-40ed-40f0-b3be-629b8ad55f05",
+      "name": "Google Gemini Chat Model",
+      "credentials": {
+        "googlePalmApi": {
+          "id": "aGjhKXARqCqxnJTf",
+          "name": "Google Gemini(PaLM) Api account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "formTitle": "Client Onboarding Form",
+        "formDescription": "Fill out all the required fields to get started with onboarding process.",
+        "formFields": {
+          "values": [
+            {
+              "fieldLabel": "Full Name",
+              "placeholder": "e.g John Doe",
+              "requiredField": true
+            },
+            {
+              "fieldLabel": "Your Email",
+              "fieldType": "email",
+              "placeholder": "e.g John.doe@example.com",
+              "requiredField": true
+            },
+            {
+              "fieldLabel": "Company Name",
+              "placeholder": "e.g Doe Enterprises",
+              "requiredField": true
+            },
+            {
+              "fieldLabel": "Industry",
+              "placeholder": "e.g Finance, Marketing",
+              "requiredField": true
+            },
+            {
+              "fieldLabel": "Service Required",
+              "fieldType": "textarea",
+              "placeholder": "e.g Website development, AI Agents",
+              "requiredField": true
+            },
+            {
+              "fieldLabel": "Start Date",
+              "fieldType": "date",
+              "requiredField": true
+            }
+          ]
+        },
+        "options": {
+          "appendAttribution": false
+        }
+      },
+      "type": "n8n-nodes-base.formTrigger",
+      "typeVersion": 2.2,
+      "position": [
+        -464,
+        -64
+      ],
+      "id": "6c9deda4-4a39-4c58-8314-c7c2ca59de38",
+      "name": "Client Onboarding Form",
+      "webhookId": "c55f40d1-4f79-434b-97da-498c9f4ed921"
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "ca232242-f78b-462b-8228-a682a632d8af",
+              "name": "Name",
+              "value": "={{ $json['Full Name'] }}",
+              "type": "string"
+            },
+            {
+              "id": "07aefcf4-353c-4db8-be2d-ab89a6e3659b",
+              "name": "Email",
+              "value": "={{ $json['Your Email'] }}",
+              "type": "string"
+            },
+            {
+              "id": "9be64412-d225-4f0b-8a1e-4bd77158f479",
+              "name": "Company Name",
+              "value": "={{ $json['Company Name'] }}",
+              "type": "string"
+            },
+            {
+              "id": "0bc1afe0-d4bb-47b7-b5a1-a72cf30f1737",
+              "name": "Industry",
+              "value": "={{ $json.Industry }}",
+              "type": "string"
+            },
+            {
+              "id": "c64e5b76-2fdf-4611-8a29-96d94b61faad",
+              "name": "Service Required",
+              "value": "={{ $json['Service Required'] }}",
+              "type": "string"
+            },
+            {
+              "id": "9410e099-bacf-4ca4-8ed5-8f9e60832a67",
+              "name": "Start Date",
+              "value": "={{ $json['Start Date'] }}",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        -256,
+        -64
+      ],
+      "id": "5d1d5aad-e9ff-487b-b9d3-374fffa26401",
+      "name": "Clean Data"
+    },
+    {
+      "parameters": {
+        "jsCode": "// Get the raw text\nconst raw = $input.first().json.output;\n\n// Extract subject (everything after \"Subject:\" until first line break)\nconst subjectMatch = raw.match(/Subject:\\s*(.+)/);\nconst subject = subjectMatch ? subjectMatch[1].trim() : \"\";\n\n// Extract body (everything after the subject line)\nconst body = raw.replace(/Subject:.*\\n+/, \"\").trim();\n\nreturn {\n  subject,\n  body\n};\n"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        608,
+        -288
+      ],
+      "id": "90efdae3-bac7-4c19-b3c4-b403de66642e",
+      "name": "Structure Data"
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "=Please generate a Terms of Service and Contract document for {{ $json.Name }} from AI Workshop. The client operates in the {{ $json[\"Industry\"] }} industry and requires services such as {{ $json['Service Required'] }} starting from {{ $json['Start Date'] }}. The contract should include:\n\n1. An introduction outlining the purpose of the contract.\n2. The scope of services.\n3. Payment terms.\n4. Obligations of both parties.\n5. Terms and conditions, including liability clauses.\n6. A section for client signature.\n",
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.agent",
+      "typeVersion": 2.2,
+      "position": [
+        256,
+        160
+      ],
+      "id": "067c42fc-0b88-4ef0-be11-22807f6d130e",
+      "name": "AI Agent1"
+    },
+    {
+      "parameters": {
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatGoogleGemini",
+      "typeVersion": 1,
+      "position": [
+        144,
+        304
+      ],
+      "id": "2a863319-f662-4627-b5a8-c1411a891ef9",
+      "name": "Google Gemini Chat Model1",
+      "credentials": {
+        "googlePalmApi": {
+          "id": "aGjhKXARqCqxnJTf",
+          "name": "Google Gemini(PaLM) Api account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "resource": "draft",
+        "subject": "={{ $json.title }}",
+        "message": "={{ $json.body }}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.gmail",
+      "typeVersion": 2.1,
+      "position": [
+        816,
+        160
+      ],
+      "id": "12211f93-00b2-4b72-ad72-f83d2b230567",
+      "name": "TOS Email",
+      "webhookId": "13aafd76-2975-447d-8972-5a1a7e07eab1",
+      "credentials": {
+        "gmailOAuth2": {
+          "id": "VvJvh2mhQ0ZsXNWb",
+          "name": "Gmail account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "resource": "draft",
+        "subject": "={{ $json.subject }}",
+        "message": "={{ $json.body }}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.gmail",
+      "typeVersion": 2.1,
+      "position": [
+        816,
+        -288
+      ],
+      "id": "fd8c4952-468e-4bb9-a7a9-a0103b6c5a1b",
+      "name": "Welcome Client Email",
+      "webhookId": "a32b5f27-a063-4e37-9682-d209686a43eb",
+      "credentials": {
+        "gmailOAuth2": {
+          "id": "VvJvh2mhQ0ZsXNWb",
+          "name": "Gmail account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "// Get the full contract text from \"output\"\nconst raw = $input.first().json.output;\n\n// Extract the title (first bold heading)\nconst titleMatch = raw.match(/\\*\\*(.*?)\\*\\*/);\nconst title = titleMatch ? titleMatch[1].trim() : \"Contract\";\n\n// Remove title from body\nlet body = raw.replace(/\\*\\*.*?\\*\\*/, \"\").trim();\n\n// Cut off everything after the \"Date:\" line of the client signature\nconst cutMatch = body.match(/([\\s\\S]*?Date:.*?)(?:\\n---|$)/i);\nif (cutMatch) {\n  body = cutMatch[1].trim();\n}\n\nreturn {\n  title,\n  body\n};\n"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        608,
+        160
+      ],
+      "id": "86009a72-e914-4272-be86-35150c67319b",
+      "name": "Structure TOS Data"
+    }
+  ],
+  "pinData": {
+    "Client Onboarding Form": [
+      {
+        "json": {
+          "Full Name": "John Doe",
+          "Your Email": "John.doe@example.com",
+          "Company Name": "Doe Enterprises",
+          "Industry": "Technology",
+          "Service Required": "Web Development\r\nSEO Optimization\r\nDigital Marketing Strategy",
+          "Start Date": "2025-09-01",
+          "submittedAt": "2025-09-01T02:49:11.425+05:00",
+          "formMode": "test"
+        }
+      }
+    ]
+  },
+  "connections": {
+    "Google Gemini Chat Model": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Client Onboarding Form": {
+      "main": [
+        [
+          {
+            "node": "Clean Data",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Clean Data": {
+      "main": [
+        [
+          {
+            "node": "AI Agent1",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "AI Agent",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "AI Agent": {
+      "main": [
+        [
+          {
+            "node": "Structure Data",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Structure Data": {
+      "main": [
+        [
+          {
+            "node": "Welcome Client Email",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "AI Agent1": {
+      "main": [
+        [
+          {
+            "node": "Structure TOS Data",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Google Gemini Chat Model1": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "AI Agent1",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Structure TOS Data": {
+      "main": [
+        [
+          {
+            "node": "TOS Email",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "versionId": "7611a88e-3319-4ea2-8e26-246d6be90b93",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "6cb509c0630c42aa9c45b8a489a0ad2d0642caf53ae1843f5bd90c611e71d37e"
+  },
+  "id": "b7yPASxd19sX0Gt4",
+  "tags": []
+}

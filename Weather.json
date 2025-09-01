@@ -1,0 +1,178 @@
+{
+  "name": "Weather",
+  "nodes": [
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "fc9d0843-9f01-4ea6-bdbc-b255534d823a",
+              "name": "query",
+              "value": "={{ $json.query }}",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        16,
+        -192
+      ],
+      "id": "feb75350-0ffc-4454-b00d-9db5c2f5c3cc",
+      "name": "Query"
+    },
+    {
+      "parameters": {
+        "cityName": "={{ $json.query }}"
+      },
+      "type": "n8n-nodes-base.openWeatherMap",
+      "typeVersion": 1,
+      "position": [
+        224,
+        -192
+      ],
+      "id": "e6c9bf6a-2b2a-467e-9197-43a2bed17f56",
+      "name": "OpenWeatherMap",
+      "credentials": {
+        "openWeatherMapApi": {
+          "id": "5ulE5ZyHIQPa3uI1",
+          "name": "OpenWeatherMap account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "modelId": {
+          "__rl": true,
+          "value": "models/gemini-2.5-flash",
+          "mode": "list",
+          "cachedResultName": "models/gemini-2.5-flash"
+        },
+        "messages": {
+          "values": [
+            {
+              "content": "=Convert the following data that came from the OpenWeatherMap to simple English, also use relevant Emojis.\n\nand answer directly dont start with:\nHere's that weather data in simple English with emojis:\\\n\nHere is the data:\n\n{{ $json.coord }}\n  {{ $json.coord.lon }}\n  {{ $json.coord.lat }}\n\n{{ $json.weather }}\n  {{ $json.weather[0] }}\n    {{ $json.weather[0].id }}\n    {{ $json.weather[0].main }}\n    {{ $json.weather[0].description }}\n    {{ $json.weather[0].icon }}\n  {{ $json.base }}\n\n{{ $json.main }}\n  {{ $json.main.temp }}\n  {{ $json.main.feels_like }}\n  {{ $json.main.temp_min }}\n  {{ $json.main.temp_max }}\n  {{ $json.main.pressure }}\n  {{ $json.main.humidity }}\n  {{ $json.main.sea_level }}\n  {{ $json.main.grnd_level }}\n{{ $json.visibility }}\n\n{{ $json.wind }}\n  {{ $json.wind.speed }}\n  {{ $json.wind.deg }}\n  {{ $json.wind.gust }}\n\n{{ $json.clouds }}\n  {{ $json.clouds.all }}\n{{ $json.dt }}\n\n{{ $json.sys }}\n  {{ $json.sys.type }}\n  {{ $json.sys.id }}\n  {{ $json.sys.country }}\n  {{ $json.sys.sunrise }}\n  {{ $json.sys.sunset }}\n{{ $json.timezone }}\n{{ $json.id }}\n{{ $json.name }}\n{{ $json.cod }}"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.googleGemini",
+      "typeVersion": 1,
+      "position": [
+        -160,
+        32
+      ],
+      "id": "bd25f148-a87a-4472-94b3-265774ccd9de",
+      "name": "Message a model",
+      "credentials": {
+        "googlePalmApi": {
+          "id": "aGjhKXARqCqxnJTf",
+          "name": "Google Gemini(PaLM) Api account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "bc07935b-447b-4734-b4e1-d735629ffc6f",
+              "name": "response",
+              "value": "={{ $json.content.parts[0].text }}",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        192,
+        32
+      ],
+      "id": "cf09e9a8-c229-4437-88f8-31125b82e0b0",
+      "name": "Response"
+    },
+    {
+      "parameters": {
+        "inputSource": "passthrough"
+      },
+      "type": "n8n-nodes-base.executeWorkflowTrigger",
+      "typeVersion": 1.1,
+      "position": [
+        -240,
+        -192
+      ],
+      "id": "61d042ee-921a-43e5-bc14-258d84359822",
+      "name": "When Executed by Another Workflow"
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Query": {
+      "main": [
+        [
+          {
+            "node": "OpenWeatherMap",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "OpenWeatherMap": {
+      "main": [
+        [
+          {
+            "node": "Message a model",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Message a model": {
+      "main": [
+        [
+          {
+            "node": "Response",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Response": {
+      "main": [
+        []
+      ]
+    },
+    "When Executed by Another Workflow": {
+      "main": [
+        [
+          {
+            "node": "Query",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "versionId": "733f09c0-7a98-4906-aa8d-67aad9a9567e",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "6cb509c0630c42aa9c45b8a489a0ad2d0642caf53ae1843f5bd90c611e71d37e"
+  },
+  "id": "CRSOPLpoENMzYkFw",
+  "tags": []
+}
