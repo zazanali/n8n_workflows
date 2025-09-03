@@ -1,0 +1,187 @@
+{
+  "name": "Calendar Automation",
+  "nodes": [
+    {
+      "parameters": {
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.chatTrigger",
+      "typeVersion": 1.3,
+      "position": [
+        -528,
+        -272
+      ],
+      "id": "4067447c-a90b-48db-be77-e5a8a64cfcd4",
+      "name": "When chat message received",
+      "webhookId": "0a26595b-6c74-4634-b81e-d02f46c00a11"
+    },
+    {
+      "parameters": {
+        "options": {
+          "systemMessage": "=You are an intelligent scheduling assistant for AI Workshop. Your goal is to help users book a 30-minute appointment by generating the correct JSON for the tools you have available.\n\n## Your Tools & JSON Generation Rules\n1. Get Calendar Availability\n\nPurpose: Use this tool to check the calendar for open appointment slots.\n\nAction: When you use this tool, you must generate a JSON object with timeMin and timeMax keys. The values must be in the full ISO 8601 format.\n\nExample JSON to Generate:\n\nJSON\n\n{\n  \"timeMin\": \"2025-09-04T09:00:00+05:00\",\n  \"timeMax\": \"2025-09-04T17:00:00+05:00\",\n  \"timeZone\": \"America/Los_Angeles\",\n  \"items\": [\n    {\n      \"id\": \"developerali389@gmail.com\"\n    }\n  ]\n}\n2. Create Appointment\n\nPurpose: Use this tool to book the final appointment on the calendar.\n\nAction: Use this tool only after collecting the user's name, email, and confirmed time. You must generate a JSON object containing the summary, start and end times, and attendees.\n\nExample JSON to Generate:\n\nJSON\n\n{\n  \"summary\": \"Appointment with John Doe\",\n  \"description\": \"Meeting booked via AI agent\",\n  \"start\": {\n    \"dateTime\": \"2025-09-04T10:30:00+05:00\",\n    \"timeZone\": \"Asia/Karachi\"\n  },\n  \"end\": {\n    \"dateTime\": \"2025-09-04T11:00:00+05:00\",\n    \"timeZone\": \"Asia/Karachi\"\n  },\n  \"attendees\": [\n    { \"email\": \"developerali389@gmail.com\" },\n    { \"email\": \"user.email@example.com\" }\n  ]\n}\n## Critical Rules\nNever generate the JSON for a tool if you are missing information. Always ask the user for the details first.\n\nAppointments are exactly 30 minutes long. You must calculate the endTime correctly in the final JSON.\n\nToday's date is {{ $today.format(\"yyyy-MM-dd\") }}."
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.agent",
+      "typeVersion": 2.2,
+      "position": [
+        -320,
+        -272
+      ],
+      "id": "b9ec254b-4ba3-46bc-b95e-441f14295baf",
+      "name": "AI Agent"
+    },
+    {
+      "parameters": {
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatGoogleGemini",
+      "typeVersion": 1,
+      "position": [
+        -464,
+        -64
+      ],
+      "id": "9d108595-c0e1-488d-89b7-39162ad2031a",
+      "name": "Google Gemini Chat Model",
+      "credentials": {
+        "googlePalmApi": {
+          "id": "aGjhKXARqCqxnJTf",
+          "name": "Google Gemini(PaLM) Api account"
+        }
+      }
+    },
+    {
+      "parameters": {},
+      "type": "@n8n/n8n-nodes-langchain.memoryBufferWindow",
+      "typeVersion": 1.3,
+      "position": [
+        -320,
+        -64
+      ],
+      "id": "160cdf25-344a-4583-bf73-cfd5708c4708",
+      "name": "Simple Memory"
+    },
+    {
+      "parameters": {
+        "toolDescription": "=Call this tool to get the appointment availability for a particular period on the calendar.\nThe tool may refer to availability as \"Free\" or \"Busy\".\n\nUse {timeMin} and {timeMax} to specify the window for the availability query.\n\nFor example, to get availability for September 20, 2024 in California, you could set:\n\n{timeMin} to 2024-09-20 09:00 AM PT\n\n{timeMax} to 2024-09-20 05:00 PM PT\n\nIf the tool returns an empty response, it means that something went wrong.\nIt does not mean that there is no availability.",
+        "method": "POST",
+        "url": "https://www.googleapis.com/calendar/v3/freeBusy",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "googleCalendarOAuth2Api",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ /*n8n-auto-generated-fromAI-override*/ $fromAI('JSON', ``, 'json') }}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequestTool",
+      "typeVersion": 4.2,
+      "position": [
+        -192,
+        -80
+      ],
+      "id": "d27f7c50-cae5-48ab-98b1-d885aa4b268f",
+      "name": "Get Calendar Avalability",
+      "credentials": {
+        "googleCalendarOAuth2Api": {
+          "id": "yWFbP2bwStezhYCh",
+          "name": "Google Calendar"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "toolDescription": "Call this tool to book an appointment in the Calendar. You must provide userName, userEmail, startTime, and endTime. The startTime and endTime must be in the ISO 8601 format (e.g., 2025-09-04T10:00:00+05:00).",
+        "method": "POST",
+        "url": "https://www.googleapis.com/calendar/v3/calendars/developerali389@gmail.com/events",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "googleCalendarOAuth2Api",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ /*n8n-auto-generated-fromAI-override*/ $fromAI('JSON', ``, 'json') }}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequestTool",
+      "typeVersion": 4.2,
+      "position": [
+        0,
+        -80
+      ],
+      "id": "6609ae40-2ea9-4109-9fe3-eef897ff1a0b",
+      "name": "Create Appointment",
+      "credentials": {
+        "googleCalendarOAuth2Api": {
+          "id": "yWFbP2bwStezhYCh",
+          "name": "Google Calendar"
+        }
+      }
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "When chat message received": {
+      "main": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Google Gemini Chat Model": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Simple Memory": {
+      "ai_memory": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "ai_memory",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get Calendar Avalability": {
+      "ai_tool": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Create Appointment": {
+      "ai_tool": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "versionId": "51721e3f-219e-4e3c-92a4-1abc64c7fc5e",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "6cb509c0630c42aa9c45b8a489a0ad2d0642caf53ae1843f5bd90c611e71d37e"
+  },
+  "id": "TtOPeefOLbvUPgdx",
+  "tags": []
+}
