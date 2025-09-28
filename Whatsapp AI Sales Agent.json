@@ -1,0 +1,658 @@
+{
+  "name": "Whatsapp AI Agent",
+  "nodes": [
+    {
+      "parameters": {
+        "options": {
+          "systemMessage": "You are an expert WhatsApp Sales Assistant. Your goal is to provide a seamless and friendly customer experience, guiding users from product inquiry to a completed order. You must follow the rules and procedures defined below precisely.\n\n**Core Rules & Persona:**\n1.  **Greeting:** When a new chat begins, your very first message MUST be: \"Hi, what's your name? How can I assist you today?\"\n2.  **Memory:**\n    * When the user provides their name, save it as `customer_name`.\n    * Proactively ask for and save `shipping_address` and `customer_phone` when an order is being placed.\n3.  **Personalization:** Always address the customer by their saved `customer_name` in every message after they have provided it.\n4.  **Accuracy:** Never guess or invent information about products, stock, or prices. Always use the provided tools.\n\n---\n\n**Tool Definitions:**\nBefore you act, you must understand your tools. Here is what each tool does:\n* **`GetInventory`**: Use this to get a list of all available products. The data includes product name, size, variations, price, and the current quantity in stock.\n* **`UpdateInventoryStock`**: (**IMPORTANT**: Make sure this name matches your new tool). Use this to add or subtract stock from the inventory sheet. For a sale, subtract the quantity. For a cancellation, add the quantity back.\n* **`Calculator`**: Use this to perform mathematical calculations. Its primary use is to calculate the `Total Price` of an order (`Price` x `Quantity`).\n* **`Append Sales Order`**: Use this tool ONLY to log a new, confirmed order into the sales record sheet. This tool will return the final order details, including the new `Order ID`.\n* **`Updates Sales Order`**: This tool MODIFIES a sales record. Use it ONLY to change an existing order's status to \"Cancelled\" in the sales sheet.\n* **`Get Order Status`**: Use this when a customer asks for the status of an existing order. You must have the `customer_phone` to look it up.\n* **`Delete Orders`**: This is a destructive action. Do NOT use this tool for standard cancellations. Only use it if a customer explicitly requests their entire order record to be permanently deleted from the system.\n\n---\n\n**Conversation Flows (Step-by-Step Procedures):**\n\n**Flow 1: When a customer asks about products:**\n1.  The user will ask a general question like, \"I want to buy a t-shirt\" or \"What hoodies do you have?\".\n2.  Call the `GetInventory` tool to see what is available.\n3.  Respond by listing the available products from that category in a clear, structured format. For each item, you **MUST** display its `Product Name`, available `Size` and `Variation`, and its `Price`. **DO NOT** state the stock number.\n    * **Correct Example:**\n        \"Of course, John! Here are the t-shirts we have available:\n\n        * **Product:** T-Shirt\n            * **Size:** Large\n            * **Variation:** Blue\n            * **Price:** $15.99\n\n        * **Product:** T-Shirt\n            * **Size:** Medium\n            * **Variation:** Red\n            * **Price:** $15.99\n\n        Let me know which one you're interested in!\"\n\n**Flow 2: When a customer wants to place an order:**\nYou must follow these steps in this exact order:\n1.  **Confirm Product:** The user confirms the item they want (e.g., \"I'll take the large blue t-shirt\"). You know the single-item `Price` from the `GetInventory` tool.\n2.  **Ask for Quantity:** After the user confirms the item, you **MUST** ask them for the desired quantity.\n    * **Example Script:** \"Great, the large blue t-shirt. How many would you like to order?\"\n3.  **Calculate Total Price:** Once you have the quantity, if it is greater than 1, you **MUST** use the `Calculator` tool to multiply the item's `Price` by the `Quantity`. If the quantity is 1, the total price is simply the item price.\n4.  **Gather Information:** Now that you have the total price calculated, check your memory for `shipping_address` and `customer_phone`. If you don't have them, you MUST ask now.\n    * **Example Script:** \"Got it, two of the large blue t-shirts for a total of $31.98. To finalize your order, I'll just need your full shipping address and a contact phone number, please.\"\n    * **CRITICAL:** You have the price data. **NEVER ask the customer for the price.**\n5.  **Final Stock Check:** After getting the address and phone, call `GetInventory` one last time to ensure there is enough stock to fulfill the requested **quantity**.\n6.  **Update Inventory:** If stock is sufficient, immediately call the **`UpdateInventoryStock`** tool to subtract the quantity from the main inventory sheet.\n7.  **Log the Sale:** Immediately after updating the inventory, call the **`Append Sales Order`** tool. This action will create the final order record.\n8.  **Confirm with Detailed Summary:** Use the data returned from the `Append Sales Order` tool to send a final, structured confirmation message. The message MUST be in this format:\n    * **Example Script:**\n        \"Your order has been placed successfully!\n\n        Here are your order details:\n        * **Order ID:** [Use the Order ID from the tool output]\n        * **Product:** [Product Name]\n        * **Size:** [Product Size]\n        * **Variation:** [Product Variation]\n        * **Total Price:** [Calculated Total Price]\n\n        Thank you for shopping with us, [customer_name]!\"\n\n**Flow 3: When a customer wants to cancel an order:**\n1.  **Identify Order:** Ask for their `customer_phone` if you don't have it, and use the `Get Order Status` tool to find their order.\n2.  **Confirm Cancellation:** Confirm with the user which order they wish to cancel.\n3.  **Restore Stock & Update Status:** First, call the **`UpdateInventoryStock`** tool to add the product quantity back to the inventory. Then, call the **`Updates Sales Order`** tool to change that order's \"Status\" column to \"Cancelled\".\n4.  **Notify Customer:** Inform the customer that their order has been successfully cancelled."
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.agent",
+      "typeVersion": 2.2,
+      "position": [
+        -192,
+        -144
+      ],
+      "id": "ea5b2517-e609-4133-9048-a060e28c0ef6",
+      "name": "AI Agent"
+    },
+    {
+      "parameters": {
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatGoogleGemini",
+      "typeVersion": 1,
+      "position": [
+        -512,
+        64
+      ],
+      "id": "f8884bf6-aff2-42a0-847e-9c568aa8f514",
+      "name": "Google Gemini Chat Model",
+      "credentials": {
+        "googlePalmApi": {
+          "id": "JKTdckuLNtiWW0t1",
+          "name": "Google Gemini(PaLM) Api account"
+        }
+      }
+    },
+    {
+      "parameters": {},
+      "type": "@n8n/n8n-nodes-langchain.memoryBufferWindow",
+      "typeVersion": 1.3,
+      "position": [
+        -48,
+        -320
+      ],
+      "id": "3d226cdd-34a9-4959-8ad2-0f5f677c75ea",
+      "name": "Simple Memory"
+    },
+    {
+      "parameters": {
+        "operation": "appendOrUpdate",
+        "documentId": {
+          "__rl": true,
+          "value": "1uH-PW_5UAsjY5ankNCUENwBkwaLjPr6vJ7B7kF83H2s",
+          "mode": "list",
+          "cachedResultName": "Sales ",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1uH-PW_5UAsjY5ankNCUENwBkwaLjPr6vJ7B7kF83H2s/edit?usp=drivesdk"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": 1496608046,
+          "mode": "list",
+          "cachedResultName": "Sales",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1uH-PW_5UAsjY5ankNCUENwBkwaLjPr6vJ7B7kF83H2s/edit#gid=1496608046"
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "Product Name": "={{ /*n8n-auto-generated-fromAI-override*/ $fromAI('Product_Name', ``, 'string') }}",
+            "Product Size": "={{ /*n8n-auto-generated-fromAI-override*/ $fromAI('Product_Size', ``, 'string') }}",
+            "Product Variation": "={{ /*n8n-auto-generated-fromAI-override*/ $fromAI('Product_Variation', ``, 'string') }}",
+            "Quantity": "={{ /*n8n-auto-generated-fromAI-override*/ $fromAI('Quantity', ``, 'string') }}",
+            "Price ": "={{ /*n8n-auto-generated-fromAI-override*/ $fromAI('Price_', ``, 'string') }}",
+            "Customer Name": "={{ /*n8n-auto-generated-fromAI-override*/ $fromAI('Customer_Name', ``, 'string') }}",
+            "Customer Phone No": "={{ /*n8n-auto-generated-fromAI-override*/ $fromAI('Customer_Phone_No', ``, 'string') }}",
+            "Customer Address": "={{ /*n8n-auto-generated-fromAI-override*/ $fromAI('Customer_Address', ``, 'string') }}",
+            "Total Price": "={{ /*n8n-auto-generated-fromAI-override*/ $fromAI('Total_Price', ``, 'string') }}",
+            "Status": "={{ /*n8n-auto-generated-fromAI-override*/ $fromAI('Status', ``, 'string') }}",
+            "Order ID": "={{ /*n8n-auto-generated-fromAI-override*/ $fromAI('Order_ID', ``, 'string') }}"
+          },
+          "matchingColumns": [
+            "Order ID"
+          ],
+          "schema": [
+            {
+              "id": "Order ID",
+              "displayName": "Order ID",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "Product Name",
+              "displayName": "Product Name",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Product Size",
+              "displayName": "Product Size",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Product Variation",
+              "displayName": "Product Variation",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Quantity",
+              "displayName": "Quantity",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Price ",
+              "displayName": "Price ",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Customer Name",
+              "displayName": "Customer Name",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "Customer Phone No",
+              "displayName": "Customer Phone No",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "Customer Address",
+              "displayName": "Customer Address",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Total Price",
+              "displayName": "Total Price",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Status",
+              "displayName": "Status",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleSheetsTool",
+      "typeVersion": 4.7,
+      "position": [
+        -352,
+        144
+      ],
+      "id": "cbbd9544-577d-4688-a6e8-bbfe10ba6c04",
+      "name": "Updates Sales Order",
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "cS11jacgNbIfgGkd",
+          "name": "Google Sheets account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "documentId": {
+          "__rl": true,
+          "value": "1uH-PW_5UAsjY5ankNCUENwBkwaLjPr6vJ7B7kF83H2s",
+          "mode": "list",
+          "cachedResultName": "Sales ",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1uH-PW_5UAsjY5ankNCUENwBkwaLjPr6vJ7B7kF83H2s/edit?usp=drivesdk"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": 1998783593,
+          "mode": "list",
+          "cachedResultName": "Inventory",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1uH-PW_5UAsjY5ankNCUENwBkwaLjPr6vJ7B7kF83H2s/edit#gid=1998783593"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleSheetsTool",
+      "typeVersion": 4.7,
+      "position": [
+        -176,
+        208
+      ],
+      "id": "93f6a5ad-0f55-4ef3-ac10-434975e7be6a",
+      "name": "GetInventory",
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "cS11jacgNbIfgGkd",
+          "name": "Google Sheets account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "append",
+        "documentId": {
+          "__rl": true,
+          "value": "1uH-PW_5UAsjY5ankNCUENwBkwaLjPr6vJ7B7kF83H2s",
+          "mode": "list",
+          "cachedResultName": "Sales ",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1uH-PW_5UAsjY5ankNCUENwBkwaLjPr6vJ7B7kF83H2s/edit?usp=drivesdk"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": 1496608046,
+          "mode": "list",
+          "cachedResultName": "Sales",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1uH-PW_5UAsjY5ankNCUENwBkwaLjPr6vJ7B7kF83H2s/edit#gid=1496608046"
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "Order ID": "={{ /*n8n-auto-generated-fromAI-override*/ $fromAI('Order_ID', ``, 'string') }}",
+            "Product Name": "={{ /*n8n-auto-generated-fromAI-override*/ $fromAI('Product_Name', ``, 'string') }}",
+            "Product Size": "={{ /*n8n-auto-generated-fromAI-override*/ $fromAI('Product_Size', ``, 'string') }}",
+            "Variations": "={{ /*n8n-auto-generated-fromAI-override*/ $fromAI('Variations', ``, 'string') }}",
+            "Quantity ": "={{ /*n8n-auto-generated-fromAI-override*/ $fromAI('Quantity_', ``, 'string') }}",
+            "Price": "={{ /*n8n-auto-generated-fromAI-override*/ $fromAI('Price', ``, 'string') }}",
+            "Customer Name": "={{ /*n8n-auto-generated-fromAI-override*/ $fromAI('Customer_Name', ``, 'string') }}",
+            "Customer Phone No": "={{ /*n8n-auto-generated-fromAI-override*/ $fromAI('Customer_Phone_No', ``, 'string') }}",
+            "Customer Address ": "={{ /*n8n-auto-generated-fromAI-override*/ $fromAI('Customer_Address_', ``, 'string') }}",
+            "Total Price": "={{ /*n8n-auto-generated-fromAI-override*/ $fromAI('Total_Price', ``, 'string') }}",
+            "Status": "={{ /*n8n-auto-generated-fromAI-override*/ $fromAI('Status', ``, 'string') }}"
+          },
+          "matchingColumns": [],
+          "schema": [
+            {
+              "id": "Order ID",
+              "displayName": "Order ID",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Product Name",
+              "displayName": "Product Name",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Product Size",
+              "displayName": "Product Size",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Variations",
+              "displayName": "Variations",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Quantity ",
+              "displayName": "Quantity ",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Price",
+              "displayName": "Price",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Customer Name",
+              "displayName": "Customer Name",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Customer Phone No",
+              "displayName": "Customer Phone No",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Customer Address ",
+              "displayName": "Customer Address ",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Total Price",
+              "displayName": "Total Price",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Status",
+              "displayName": "Status",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleSheetsTool",
+      "typeVersion": 4.7,
+      "position": [
+        -48,
+        288
+      ],
+      "id": "9d7cd1f5-781a-4222-907f-1129351aac52",
+      "name": "Append Sales Order",
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "cS11jacgNbIfgGkd",
+          "name": "Google Sheets account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "documentId": {
+          "__rl": true,
+          "value": "1uH-PW_5UAsjY5ankNCUENwBkwaLjPr6vJ7B7kF83H2s",
+          "mode": "list",
+          "cachedResultName": "Sales ",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1uH-PW_5UAsjY5ankNCUENwBkwaLjPr6vJ7B7kF83H2s/edit?usp=drivesdk"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": 1496608046,
+          "mode": "list",
+          "cachedResultName": "Sales",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1uH-PW_5UAsjY5ankNCUENwBkwaLjPr6vJ7B7kF83H2s/edit#gid=1496608046"
+        },
+        "filtersUI": {
+          "values": [
+            {
+              "lookupColumn": "Order ID",
+              "lookupValue": "={{ /*n8n-auto-generated-fromAI-override*/ $fromAI('values0_Value', ``, 'string') }}"
+            },
+            {
+              "lookupColumn": "Customer Phone No",
+              "lookupValue": "={{ /*n8n-auto-generated-fromAI-override*/ $fromAI('values1_Value', ``, 'string') }}"
+            }
+          ]
+        },
+        "combineFilters": "OR",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleSheetsTool",
+      "typeVersion": 4.7,
+      "position": [
+        96,
+        224
+      ],
+      "id": "9d037e2c-1066-418e-ab9d-c109401ee2e2",
+      "name": "Get Order Status",
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "cS11jacgNbIfgGkd",
+          "name": "Google Sheets account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "documentId": {
+          "__rl": true,
+          "value": "1uH-PW_5UAsjY5ankNCUENwBkwaLjPr6vJ7B7kF83H2s",
+          "mode": "list",
+          "cachedResultName": "Sales ",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1uH-PW_5UAsjY5ankNCUENwBkwaLjPr6vJ7B7kF83H2s/edit?usp=drivesdk"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": 1998783593,
+          "mode": "list",
+          "cachedResultName": "Inventory",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1uH-PW_5UAsjY5ankNCUENwBkwaLjPr6vJ7B7kF83H2s/edit#gid=1998783593"
+        },
+        "filtersUI": {
+          "values": [
+            {
+              "lookupColumn": "Product Name",
+              "lookupValue": "={{ /*n8n-auto-generated-fromAI-override*/ $fromAI('values0_Value', ``, 'string') }}"
+            },
+            {
+              "lookupColumn": "Size",
+              "lookupValue": "={{ /*n8n-auto-generated-fromAI-override*/ $fromAI('values1_Value', ``, 'string') }}"
+            },
+            {
+              "lookupColumn": "Variation",
+              "lookupValue": "={{ /*n8n-auto-generated-fromAI-override*/ $fromAI('values2_Value', ``, 'string') }}"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleSheetsTool",
+      "typeVersion": 4.7,
+      "position": [
+        240,
+        144
+      ],
+      "id": "bb246248-40bb-4172-8f73-549e3dd41c8c",
+      "name": "Update Inventory",
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "cS11jacgNbIfgGkd",
+          "name": "Google Sheets account"
+        }
+      }
+    },
+    {
+      "parameters": {},
+      "type": "@n8n/n8n-nodes-langchain.toolCalculator",
+      "typeVersion": 1,
+      "position": [
+        368,
+        48
+      ],
+      "id": "f2cae624-f374-414b-9593-5d3c194bd810",
+      "name": "Calculator"
+    },
+    {
+      "parameters": {
+        "updates": [
+          "messages"
+        ],
+        "options": {}
+      },
+      "type": "n8n-nodes-base.whatsAppTrigger",
+      "typeVersion": 1,
+      "position": [
+        -448,
+        -144
+      ],
+      "id": "c94ac47f-83e1-4efe-a6ea-a4d0079bf50b",
+      "name": "WhatsApp Trigger",
+      "webhookId": "b38661c6-7d89-4f8b-9606-e3585660f0d2"
+    },
+    {
+      "parameters": {
+        "operation": "send",
+        "additionalFields": {}
+      },
+      "type": "n8n-nodes-base.whatsApp",
+      "typeVersion": 1,
+      "position": [
+        256,
+        -144
+      ],
+      "id": "80989a85-2952-4b32-95b1-868f0b9bb88f",
+      "name": "Send message",
+      "webhookId": "81bcfda0-d514-4321-a191-d0c0f85ad6a6"
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Google Gemini Chat Model": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Simple Memory": {
+      "ai_memory": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "ai_memory",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "AI Agent": {
+      "main": [
+        [
+          {
+            "node": "Send message",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Updates Sales Order": {
+      "ai_tool": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "GetInventory": {
+      "ai_tool": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Append Sales Order": {
+      "ai_tool": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get Order Status": {
+      "ai_tool": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Update Inventory": {
+      "ai_tool": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Calculator": {
+      "ai_tool": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "WhatsApp Trigger": {
+      "main": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "versionId": "3f324efd-5e1a-45e8-94a0-d0c67c090fe4",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "cc985d891f1a3cdadb2de3e1afbf4ed6ac3f0d7db5a5bce70ab50512edb41d07"
+  },
+  "id": "HT64Rig7YDR1AxZw",
+  "tags": []
+}
